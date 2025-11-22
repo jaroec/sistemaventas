@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Ventas - Clientes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .header-title {
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        .card {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .sidebar {
+            backdrop-filter: blur(10px);
+            background: rgba(30, 58, 138, 0.95);
+        }
+        
+        .nav-item {
+            transition: all 0.3s ease;
+        }
+        
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(5px);
+        }
+        
+        .nav-item.active {
+            background: rgba(255, 255, 255, 0.2);
+            border-left: 4px solid #f59e0b;
+        }
+        
+        .customer-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .customer-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        .floating-particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+        
+        .floating {
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, #1e3a8a, #10b981);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .modal {
+            backdrop-filter: blur(5px);
+        }
+        
+        .loyalty-badge {
+            background: linear-gradient(135deg, #f59e0b, #ef4444);
+            color: white;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        
+        .credit-indicator {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #ef4444;
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <!-- Fondo animado -->
+    <div class="floating-particles">
+        <div class="absolute top-20 left-10 w-4 h-4 bg-white rounded-full opacity-20 floating"></div>
+        <div class="absolute top-40 right-20 w-6 h-6 bg-blue-200 rounded-full opacity-30 floating" style="animation-delay: 2s;"></div>
+        <div class="absolute bottom-20 left-1/4 w-3 h-3 bg-green-200 rounded-full opacity-25 floating" style="animation-delay: 4s;"></div>
+        <div class="absolute top-1/3 right-1/3 w-5 h-5 bg-yellow-200 rounded-full opacity-20 floating" style="animation-delay: 1s;"></div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar fixed left-0 top-0 w-64 h-full text-white z-40">
+        <div class="p-6">
+            <h1 class="header-title text-2xl font-bold text-center mb-8">
+                <i class="fas fa-store mr-2"></i>
+                Sistema Ventas
+            </h1>
+            
+            <nav class="space-y-2">
+                <a href="index.html" class="nav-item flex items-center p-3 rounded-lg">
+                    <i class="fas fa-tachometer-alt mr-3"></i>
+                    Dashboard
+                </a>
+                <a href="products.html" class="nav-item flex items-center p-3 rounded-lg">
+                    <i class="fas fa-boxes mr-3"></i>
+                    Productos
+                </a>
+                <a href="sales.html" class="nav-item flex items-center p-3 rounded-lg">
+                    <i class="fas fa-shopping-cart mr-3"></i>
+                    Punto de Venta
+                </a>
+                <a href="customers.html" class="nav-item active flex items-center p-3 rounded-lg">
+                    <i class="fas fa-users mr-3"></i>
+                    Clientes
+                </a>
+                <a href="reports.html" class="nav-item flex items-center p-3 rounded-lg">
+                    <i class="fas fa-chart-bar mr-3"></i>
+                    Reportes
+                </a>
+            </nav>
+        </div>
+        
+        <div class="absolute bottom-6 left-6 right-6">
+            <button onclick="toggleCarrito()" class="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-semibold py-3 px-4 rounded-lg flex items-center justify-center">
+                <i class="fas fa-shopping-cart mr-2"></i>
+                Ver Carrito
+                <span class="cart-count ml-2 bg-red-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center">0</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Contenido Principal -->
+    <div class="ml-64 p-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h2 class="header-title text-4xl font-bold text-white mb-2">Gestión de Clientes</h2>
+                    <p class="text-blue-100">Administra tu base de clientes y programa de fidelización</p>
+                </div>
+                <button onclick="mostrarModal('agregarClienteModal')" class="bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-6 rounded-lg flex items-center">
+                    <i class="fas fa-plus mr-2"></i>
+                    Agregar Cliente
+                </button>
+            </div>
+        </div>
+
+        <!-- Estadísticas -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="card rounded-xl p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm font-medium">Total Clientes</p>
+                        <p class="text-3xl font-bold text-gray-900 total-clientes">0</p>
+                    </div>
+                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-users text-blue-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card rounded-xl p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm font-medium">Clientes Activos</p>
+                        <p class="text-3xl font-bold text-green-600">85</p>
+                    </div>
+                    <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-heart text-green-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card rounded-xl p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm font-medium">Crédito Total</p>
+                        <p class="text-3xl font-bold text-red-600">$1,250</p>
+                    </div>
+                    <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-credit-card text-red-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filtros y Búsqueda -->
+        <div class="card rounded-xl p-6 mb-6">
+            <div class="flex flex-col md:flex-row gap-4 items-center">
+                <div class="flex-1">
+                    <div class="relative">
+                        <input 
+                            type="text" 
+                            id="buscarCliente" 
+                            placeholder="Buscar clientes por nombre, email o teléfono..."
+                            class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            oninput="buscarClientes()"
+                        >
+                        <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                    </div>
+                </div>
+                
+                <div class="flex gap-2">
+                    <select id="filtroTipo" onchange="filtrarClientes()" class="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="todos">Todos los clientes</option>
+                        <option value="con-credito">Con crédito</option>
+                        <option value="fidelizados">Fidelizados</option>
+                        <option value="nuevos">Nuevos</option>
+                    </select>
+                    
+                    <button onclick="exportarClientes()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-3 rounded-lg">
+                        <i class="fas fa-download"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Grid de Clientes -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="gridClientes">
+            <!-- Clientes se cargarán dinámicamente -->
+        </div>
+
+        <!-- Mensaje cuando no hay clientes -->
+        <div id="mensajeVacio" class="hidden text-center py-12">
+            <i class="fas fa-user-slash text-6xl text-gray-300 mb-4"></i>
+            <h3 class="text-xl font-semibold text-gray-600 mb-2">No se encontraron clientes</h3>
+            <p class="text-gray-500">Intenta ajustar tu búsqueda o agrega nuevos clientes</p>
+        </div>
+    </div>
+
+    <!-- Modal Agregar/Editar Cliente -->
+    <div id="agregarClienteModal" class="modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl p-8 max-w-2xl w-full mx-4 max-h-screen overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold" id="modalTitulo">Agregar Nuevo Cliente</h3>
+                <button onclick="ocultarModal('agregarClienteModal')" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <form id="formCliente" onsubmit="guardarCliente(event)">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Nombre Completo</label>
+                        <input type="text" id="nombreCliente" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Email</label>
+                        <input type="email" id="emailCliente" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Teléfono</label>
+                        <input type="tel" id="telefonoCliente" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Crédito Inicial</label>
+                        <input type="number" id="creditoCliente" min="0" step="0.01" value="0" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                </div>
+                
+                <div class="mb-6">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Dirección</label>
+                    <textarea id="direccionCliente" rows="3" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
+                </div>
+                
+                <div class="flex gap-4">
+                    <button type="submit" class="flex-1 bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-6 rounded-lg">
+                        <i class="fas fa-save mr-2"></i>
+                        Guardar Cliente
+                    </button>
+                    <button type="button" onclick="ocultarModal('agregarClienteModal')" class="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                        Cancelar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Detalles del Cliente -->
+    <div id="detallesClienteModal" class="modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl p-8 max-w-2xl w-full mx-4 max-h-screen overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold" id="detallesTitulo">Detalles del Cliente</h3>
+                <button onclick="ocultarModal('detallesClienteModal')" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <div id="detallesContent">
+                <!-- Contenido de detalles se llenará dinámicamente -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Confirmar Eliminación -->
+    <div id="confirmarEliminarModal" class="modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl p-8 max-w-md w-full mx-4">
+            <div class="text-center">
+                <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-exclamation-triangle text-red-600 text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-2">¿Eliminar Cliente?</h3>
+                <p class="text-gray-600 mb-6">Esta acción no se puede deshacer. ¿Estás seguro de que quieres eliminar este cliente?</p>
+                
+                <div class="flex gap-4">
+                    <button onclick="confirmarEliminacion()" class="flex-1 bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-6 rounded-lg">
+                        <i class="fas fa-trash mr-2"></i>
+                        Eliminar
+                    </button>
+                    <button onclick="ocultarModal('confirmarEliminarModal')" class="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                        Cancelar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Panel del Carrito -->
+    <div class="carrito-panel fixed top-0 right-0 w-96 h-full bg-white shadow-2xl z-50 overflow-y-auto">
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-semibold">Carrito de Compras</h3>
+                <button onclick="toggleCarrito()" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <div class="cart-items mb-6">
+                <!-- Items del carrito se llenarán dinámicamente -->
+            </div>
+            
+            <div class="border-t pt-4">
+                <div class="flex justify-between items-center mb-4">
+                    <span class="text-lg font-semibold">Total:</span>
+                    <span class="cart-total text-xl font-bold text-green-600">$0.00</span>
+                </div>
+                
+                <a href="sales.html" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-cash-register mr-2"></i>
+                    Proceder a Pagar
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script src="main.js"></script>
+    <script>
+        let clienteActual = null;
+        let clienteAEliminar = null;
+
+        // Cargar clientes al inicio
+        document.addEventListener('DOMContentLoaded', function() {
+            cargarClientes();
+            actualizarEstadisticas();
+        });
+
+        function cargarClientes() {
+            const gridClientes = document.getElementById('gridClientes');
+            const clientes = sistema.clientes;
+            
+            if (clientes.length === 0) {
+                document.getElementById('mensajeVacio').classList.remove('hidden');
+                gridClientes.classList.add('hidden');
+                return;
+            }
+            
+            document.getElementById('mensajeVacio').classList.add('hidden');
+            gridClientes.classList.remove('hidden');
+            
+            gridClientes.innerHTML = clientes.map(cliente => `
+                <div class="customer-card card rounded-xl p-6 relative">
+                    ${cliente.credito > 0 ? '<div class="credit-indicator">$</div>' : ''}
+                    
+                    <div class="flex items-center mb-4">
+                        <div class="loyalty-badge mr-4">
+                            ${cliente.puntosFidelidad || 0}
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="font-bold text-lg text-gray-900">${cliente.nombre}</h3>
+                            <p class="text-gray-600 text-sm">${cliente.email}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-2 mb-4">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">Teléfono:</span>
+                            <span class="text-sm font-medium">${cliente.telefono || 'N/A'}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">Puntos:</span>
+                            <span class="text-sm font-medium text-yellow-600">${cliente.puntosFidelidad || 0}</span>
+                        </div>
+                        ${cliente.credito > 0 ? `
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm text-gray-600">Crédito:</span>
+                                <span class="text-sm font-medium text-red-600">$${cliente.credito.toFixed(2)}</span>
+                            </div>
+                        ` : ''}
+                    </div>
+                    
+                    <div class="border-t pt-4">
+                        <div class="flex gap-2">
+                            <button onclick="verDetallesCliente('${cliente.id}')" 
+                                    class="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg text-sm font-semibold flex items-center justify-center">
+                                <i class="fas fa-eye mr-1"></i>
+                                Detalles
+                            </button>
+                            <button onclick="editarCliente('${cliente.id}')" 
+                                    class="bg-yellow-500 hover:bg-yellow-600 text-white py-2 px-3 rounded-lg text-sm">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button onclick="confirmarEliminarCliente('${cliente.id}')" 
+                                    class="bg-red-500 hover:bg-red-600 text-white py-2 px-3 rounded-lg text-sm">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            // Animar las tarjetas
+            if (typeof anime !== 'undefined') {
+                anime({
+                    targets: '.customer-card',
+                    translateY: [50, 0],
+                    opacity: [0, 1],
+                    delay: anime.stagger(100),
+                    duration: 600,
+                    easing: 'easeOutExpo'
+                });
+            }
+        }
+
+        function buscarClientes() {
+            const termino = document.getElementById('buscarCliente').value.toLowerCase();
+            const clientes = sistema.clientes.filter(cliente => 
+                cliente.nombre.toLowerCase().includes(termino) ||
+                cliente.email.toLowerCase().includes(termino) ||
+                (cliente.telefono && cliente.telefono.toLowerCase().includes(termino))
+            );
+            
+            if (clientes.length === 0) {
+                document.getElementById('mensajeVacio').classList.remove('hidden');
+                document.getElementById('gridClientes').classList.add('hidden');
+            } else {
+                document.getElementById('mensajeVacio').classList.add('hidden');
+                document.getElementById('gridClientes').classList.remove('hidden');
+                
+                // Actualizar el grid con los resultados
+                const gridClientes = document.getElementById('gridClientes');
+                gridClientes.innerHTML = clientes.map(cliente => `
+                    <div class="customer-card card rounded-xl p-6 relative">
+                        ${cliente.credito > 0 ? '<div class="credit-indicator">$</div>' : ''}
+                        
+                        <div class="flex items-center mb-4">
+                            <div class="loyalty-badge mr-4">
+                                ${cliente.puntosFidelidad || 0}
+                            </div>
+                            <div class="flex-1">
+                                <h3 class="font-bold text-lg text-gray-900">${cliente.nombre}</h3>
+                                <p class="text-gray-600 text-sm">${cliente.email}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-2 mb-4">
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm text-gray-600">Teléfono:</span>
+                                <span class="text-sm font-medium">${cliente.telefono || 'N/A'}</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm text-gray-600">Puntos:</span>
+                                <span class="text-sm font-medium text-yellow-600">${cliente.puntosFidelidad || 0}</span>
+                            </div>
+                            ${cliente.credito > 0 ? `
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm text-gray-600">Crédito:</span>
+                                    <span class="text-sm font-medium text-red-600">$${cliente.credito.toFixed(2)}</span>
+                                </div>
+                            ` : ''}
+                        </div>
+                        
+                        <div class="border-t pt-4">
+                            <div class="flex gap-2">
+                                <button onclick="verDetallesCliente('${cliente.id}')" 
+                                        class="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg text-sm font-semibold flex items-center justify-center">
+                                    <i class="fas fa-eye mr-1"></i>
+                                    Detalles
+                                </button>
+                                <button onclick="editarCliente('${cliente.id}')" 
+                                        class="bg-yellow-500 hover:bg-yellow-600 text-white py-2 px-3 rounded-lg text-sm">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button onclick="confirmarEliminarCliente('${cliente.id}')" 
+                                        class="bg-red-500 hover:bg-red-600 text-white py-2 px-3 rounded-lg text-sm">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function filtrarClientes() {
+            const tipo = document.getElementById('filtroTipo').value;
+            let clientesFiltrados = [];
+            
+            switch(tipo) {
+                case 'con-credito':
+                    clientesFiltrados = sistema.clientes.filter(c => c.credito > 0);
+                    break;
+                case 'fidelizados':
+                    clientesFiltrados = sistema.clientes.filter(c => c.puntosFidelidad > 100);
+                    break;
+                case 'nuevos':
+                    clientesFiltrados = sistema.clientes.filter(c => c.historial && c.historial.length === 0);
+                    break;
+                default:
+                    clientesFiltrados = sistema.clientes;
+            }
+            
+            if (clientesFiltrados.length === 0) {
+                document.getElementById('mensajeVacio').classList.remove('hidden');
+                document.getElementById('gridClientes').classList.add('hidden');
+            } else {
+                document.getElementById('mensajeVacio').classList.add('hidden');
+                document.getElementById('gridClientes').classList.remove('hidden');
+                
+                // Actualizar el grid con los clientes filtrados
+                cargarClientesFiltrados(clientesFiltrados);
+            }
+        }
+
+        function cargarClientesFiltrados(clientes) {
+            const gridClientes = document.getElementById('gridClientes');
+            gridClientes.innerHTML = clientes.map(cliente => `
+                <div class="customer-card card rounded-xl p-6 relative">
+                    ${cliente.credito > 0 ? '<div class="credit-indicator">$</div>' : ''}
+                    
+                    <div class="flex items-center mb-4">
+                        <div class="loyalty-badge mr-4">
+                            ${cliente.puntosFidelidad || 0}
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="font-bold text-lg text-gray-900">${cliente.nombre}</h3>
+                            <p class="text-gray-600 text-sm">${cliente.email}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-2 mb-4">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">Teléfono:</span>
+                            <span class="text-sm font-medium">${cliente.telefono || 'N/A'}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">Puntos:</span>
+                            <span class="text-sm font-medium text-yellow-600">${cliente.puntosFidelidad || 0}</span>
+                        </div>
+                        ${cliente.credito > 0 ? `
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm text-gray-600">Crédito:</span>
+                                <span class="text-sm font-medium text-red-600">$${cliente.credito.toFixed(2)}</span>
+                            </div>
+                        ` : ''}
+                    </div>
+                    
+                    <div class="border-t pt-4">
+                        <div class="flex gap-2">
+                            <button onclick="verDetallesCliente('${cliente.id}')" 
+                                    class="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg text-sm font-semibold flex items-center justify-center">
+                                <i class="fas fa-eye mr-1"></i>
+                                Detalles
+                            </button>
+                            <button onclick="editarCliente('${cliente.id}')" 
+                                    class="bg-yellow-500 hover:bg-yellow-600 text-white py-2 px-3 rounded-lg text-sm">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button onclick="confirmarEliminarCliente('${cliente.id}')" 
+                                    class="bg-red-500 hover:bg-red-600 text-white py-2 px-3 rounded-lg text-sm">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function verDetallesCliente(clienteId) {
+            const cliente = sistema.clientes.find(c => c.id === clienteId);
+            if (cliente) {
+                document.getElementById('detallesTitulo').textContent = `Detalles de ${cliente.nombre}`;
+                
+                const historial = cliente.historial || [];
+                const totalCompras = historial.reduce((sum, compra) => sum + compra.total, 0);
+                
+                document.getElementById('detallesContent').innerHTML = `
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <h4 class="font-semibold text-gray-700 mb-2">Información Personal</h4>
+                            <div class="space-y-2">
+                                <div><strong>Nombre:</strong> ${cliente.nombre}</div>
+                                <div><strong>Email:</strong> ${cliente.email}</div>
+                                <div><strong>Teléfono:</strong> ${cliente.telefono || 'N/A'}</div>
+                                <div><strong>Dirección:</strong> ${cliente.direccion || 'N/A'}</div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h4 class="font-semibold text-gray-700 mb-2">Estadísticas</h4>
+                            <div class="space-y-2">
+                                <div><strong>Puntos de Fidelidad:</strong> ${cliente.puntosFidelidad || 0}</div>
+                                <div><strong>Crédito Disponible:</strong> $${cliente.credito.toFixed(2)}</div>
+                                <div><strong>Total Compras:</strong> $${totalCompras.toFixed(2)}</div>
+                                <div><strong>Compras Realizadas:</strong> ${historial.length}</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="border-t pt-4">
+                        <h4 class="font-semibold text-gray-700 mb-4">Historial de Compras</h4>
+                        ${historial.length > 0 ? `
+                            <div class="space-y-2 max-h-64 overflow-y-auto">
+                                ${historial.map(compra => `
+                                    <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                        <div>
+                                            <div class="font-medium">${compra.fecha}</div>
+                                            <div class="text-sm text-gray-600">${compra.productos.length} producto(s)</div>
+                                        </div>
+                                        <div class="text-right">
+                                            <div class="font-semibold text-green-600">$${compra.total.toFixed(2)}</div>
+                                            <div class="text-xs text-gray-500">${compra.metodoPago}</div>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : `
+                            <div class="text-center py-8 text-gray-500">
+                                <i class="fas fa-shopping-bag text-4xl mb-2"></i>
+                                <p>No hay compras registradas</p>
+                            </div>
+                        `}
+                    </div>
+                `;
+                
+                mostrarModal('detallesClienteModal');
+            }
+        }
+
+        function editarCliente(clienteId) {
+            const cliente = sistema.clientes.find(c => c.id === clienteId);
+            if (cliente) {
+                clienteActual = cliente;
+                
+                // Llenar el formulario
+                document.getElementById('modalTitulo').textContent = 'Editar Cliente';
+                document.getElementById('nombreCliente').value = cliente.nombre;
+                document.getElementById('emailCliente').value = cliente.email;
+                document.getElementById('telefonoCliente').value = cliente.telefono || '';
+                document.getElementById('creditoCliente').value = cliente.credito || 0;
+                document.getElementById('direccionCliente').value = cliente.direccion || '';
+                
+                mostrarModal('agregarClienteModal');
+            }
+        }
+
+        function guardarCliente(event) {
+            event.preventDefault();
+            
+            const clienteData = {
+                nombre: document.getElementById('nombreCliente').value,
+                email: document.getElementById('emailCliente').value,
+                telefono: document.getElementById('telefonoCliente').value,
+                direccion: document.getElementById('direccionCliente').value,
+                credito: parseFloat(document.getElementById('creditoCliente').value) || 0,
+                puntosFidelidad: clienteActual ? clienteActual.puntosFidelidad : 0,
+                historial: clienteActual ? clienteActual.historial : []
+            };
+            
+            if (clienteActual) {
+                // Editar cliente existente
+                const index = sistema.clientes.findIndex(c => c.id === clienteActual.id);
+                if (index !== -1) {
+                    sistema.clientes[index] = { ...sistema.clientes[index], ...clienteData };
+                    sistema.guardarClientes();
+                }
+                clienteActual = null;
+            } else {
+                // Agregar nuevo cliente
+                sistema.agregarCliente(clienteData);
+            }
+            
+            ocultarModal('agregarClienteModal');
+            limpiarFormulario();
+            cargarClientes();
+            actualizarEstadisticas();
+        }
+
+        function confirmarEliminarCliente(clienteId) {
+            clienteAEliminar = clienteId;
+            mostrarModal('confirmarEliminarModal');
+        }
+
+        function confirmarEliminacion() {
+            if (clienteAEliminar) {
+                sistema.clientes = sistema.clientes.filter(c => c.id !== clienteAEliminar);
+                sistema.guardarClientes();
+                cargarClientes();
+                actualizarEstadisticas();
+                clienteAEliminar = null;
+            }
+            ocultarModal('confirmarEliminarModal');
+        }
+
+        function limpiarFormulario() {
+            document.getElementById('formCliente').reset();
+            document.getElementById('modalTitulo').textContent = 'Agregar Nuevo Cliente';
+            clienteActual = null;
+        }
+
+        function actualizarEstadisticas() {
+            const totalClientes = sistema.clientes.length;
+            const clientesConCredito = sistema.clientes.filter(c => c.credito > 0).length;
+            const creditoTotal = sistema.clientes.reduce((sum, c) => sum + c.credito, 0);
+            
+            document.querySelector('.total-clientes').textContent = totalClientes;
+            // Las otras estadísticas son de demostración
+        }
+
+        function exportarClientes() {
+            const clientes = sistema.clientes;
+            const csvContent = "data:text/csv;charset=utf-8," 
+                + "ID,Nombre,Email,Teléfono,Dirección,Puntos Fidelidad,Crédito\n"
+                + clientes.map(c => `${c.id},"${c.nombre}","${c.email}","${c.telefono || ''}","${c.direccion || ''}",${c.puntosFidelidad || 0},${c.credito || 0}`).join("\n");
+            
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "clientes.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            sistema.mostrarNotificacion('Clientes exportados exitosamente', 'success');
+        }
+
+        function mostrarModal(modalId) {
+            document.getElementById(modalId).classList.remove('hidden');
+        }
+
+        function ocultarModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+            if (modalId === 'agregarClienteModal') {
+                limpiarFormulario();
+            }
+        }
+
+        function toggleCarrito() {
+            const carrito = document.querySelector('.carrito-panel');
+            carrito.classList.toggle('translate-x-full');
+        }
+    </script>
+</body>
+</html>
