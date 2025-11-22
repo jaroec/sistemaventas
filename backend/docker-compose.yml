@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: sistema_ventas_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: sistema_ventas
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Jaroec31317570.
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+    networks:
+      - sistema_ventas_network
+
+  backend:
+    build: .
+    container_name: sistema_ventas_backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: sistema_ventas
+      DB_USER: postgres
+      DB_PASSWORD: Jaroec31317570.
+      JWT_SECRET: super_secret_jwt_key_for_sistema_ventas_2024_production
+      JWT_REFRESH_SECRET: refresh_token_secret_for_sistema_ventas_2024_production
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - sistema_ventas_network
+
+  nginx:
+    image: nginx:alpine
+    container_name: sistema_ventas_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - backend
+    networks:
+      - sistema_ventas_network
+
+volumes:
+  postgres_data:
+
+networks:
+  sistema_ventas_network:
+    driver: bridge
