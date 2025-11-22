@@ -5,6 +5,7 @@ const Customer = require('./Customer');
 const Sale = require('./Sale');
 const SaleItem = require('./SaleItem');
 const InventoryMovement = require('./InventoryMovement');
+const Supplier = require('./Supplier');        // ✅ AGREGADO
 
 // Definir todas las asociaciones
 const defineAssociations = () => {
@@ -15,8 +16,12 @@ const defineAssociations = () => {
   // Category associations
   Category.hasMany(Product, { foreignKey: 'categoryId', as: 'products' });
 
+  // Supplier associations                      // ✅ AGREGADO
+  Supplier.hasMany(Product, { foreignKey: 'supplierId', as: 'products' });
+
   // Product associations
   Product.belongsTo(Category, { foreignKey: 'categoryId', as: 'category' });
+  Product.belongsTo(Supplier, { foreignKey: 'supplierId', as: 'supplier' });  // ✅ AGREGADO
   Product.hasMany(SaleItem, { foreignKey: 'productId', as: 'saleItems' });
   Product.hasMany(InventoryMovement, { foreignKey: 'productId', as: 'inventoryMovements' });
 
@@ -46,5 +51,6 @@ module.exports = {
   Sale,
   SaleItem,
   InventoryMovement,
+  Supplier,                    // ✅ AGREGADO
   defineAssociations
 };
