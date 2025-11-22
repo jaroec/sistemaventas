@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Ventas - Punto de Venta</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .header-title {
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        .card {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .sidebar {
+            backdrop-filter: blur(10px);
+            background: rgba(30, 58, 138, 0.95);
+        }
+        
+        .nav-item {
+            transition: all 0.3s ease;
+        }
+        
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(5px);
+        }
+        
+        .nav-item.active {
+            background: rgba(255, 255, 255, 0.2);
+            border-left: 4px solid #f59e0b;
+        }
+        
+        .product-item {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .product-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .cart-item {
+            transition: all 0.3s ease;
+        }
+        
+        .cart-item:hover {
+            background: rgba(59, 130, 246, 0.05);
+        }
+        
+        .floating-particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+        
+        .floating {
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, #1e3a8a, #10b981);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .payment-method {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .payment-method:hover {
+            transform: scale(1.05);
+        }
+        
+        .payment-method.selected {
+            background: linear-gradient(135deg, #1e3a8a, #10b981);
+            color: white;
+            transform: scale(1.05);
+        }
+        
+        .success-animation {
+            animation: successPulse 0.6s ease-out;
+        }
+        
+        @keyframes successPulse {
+            0% { transform: scale(0.8); opacity: 0; }
+            50% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .receipt {
+            font-family: 'Courier New', monospace;
+            background: white;
+            border: 1px dashed #ccc;
+        }
+    </style>
+</head>
+<body>
+    <!-- Fondo animado -->
+    <div class="floating-particles">
+        <div class="absolute top-20 left-10 w-4 h-4 bg-white rounded-full opacity-20 floating"></div>
+        <div class="absolute top-40 right-20 w-6 h-6 bg-blue-200 rounded-full opacity-30 floating" style="animation-delay: 2s;"></div>
+        <div class="absolute bottom-20 left-1/4 w-3 h-3 bg-green-200 rounded-full opacity-25 floating" style="animation-delay: 4s;"></div>
+        <div class="absolute top-1/3 right-1/3 w-5 h-5 bg-yellow-200 rounded-full opacity-20 floating" style="animation-delay: 1s;"></div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar fixed left-0 top-0 w-64 h-full text-white z-40">
+        <div class="p-6">
+            <h1 class="header-title text-2xl font-bold text-center mb-8">
+                <i class="fas fa-store mr-2"></i>
+                Sistema Ventas
+            </h1>
+            
+            <nav class="space-y-2">
+                <a href="index.html" class="nav-item flex items-center p-3 rounded-lg">
+                    <i class="fas fa-tachometer-alt mr-3"></i>
+                    Dashboard
+                </a>
+                <a href="products.html" class="nav-item flex items-center p-3 rounded-lg">
+                    <i class="fas fa-boxes mr-3"></i>
+                    Productos
+                </a>
+                <a href="sales.html" class="nav-item active flex items-center p-3 rounded-lg">
+                    <i class="fas fa-shopping-cart mr-3"></i>
+                    Punto de Venta
+                </a>
+                <a href="customers.html" class="nav-item flex items-center p-3 rounded-lg">
+                    <i class="fas fa-users mr-3"></i>
+                    Clientes
+                </a>
+                <a href="reports.html" class="nav-item flex items-center p-3 rounded-lg">
+                    <i class="fas fa-chart-bar mr-3"></i>
+                    Reportes
+                </a>
+            </nav>
+        </div>
+        
+        <div class="absolute bottom-6 left-6 right-6">
+            <button onclick="toggleCarrito()" class="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-semibold py-3 px-4 rounded-lg flex items-center justify-center">
+                <i class="fas fa-shopping-cart mr-2"></i>
+                Ver Carrito
+                <span class="cart-count ml-2 bg-red-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center">0</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Contenido Principal -->
+    <div class="ml-64 p-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <h2 class="header-title text-4xl font-bold text-white mb-2">Punto de Venta</h2>
+            <p class="text-blue-100">Procesa ventas rápida y eficientemente</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Panel de Productos -->
+            <div class="lg:col-span-2">
+                <!-- Búsqueda de Productos -->
+                <div class="card rounded-xl p-6 mb-6">
+                    <div class="relative">
+                        <input 
+                            type="text" 
+                            id="buscarProductoVenta" 
+                            placeholder="Buscar productos por nombre o código..."
+                            class="w-full pl-12 pr-4 py-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
+                            oninput="buscarProductosVenta()"
+                        >
+                        <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-xl"></i>
+                    </div>
+                    <div id="resultadosBusquedaVenta" class="mt-2"></div>
+                </div>
+
+                <!-- Categorías Rápidas -->
+                <div class="card rounded-xl p-6 mb-6">
+                    <h3 class="text-lg font-semibold mb-4">Categorías</h3>
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="filtrarPorCategoriaVenta('todos')" class="categoria-btn px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
+                            Todos
+                        </button>
+                        <button onclick="filtrarPorCategoriaVenta('Electrónicos')" class="categoria-btn px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">
+                            Electrónicos
+                        </button>
+                        <button onclick="filtrarPorCategoriaVenta('Alimentos')" class="categoria-btn px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">
+                            Alimentos
+                        </button>
+                        <button onclick="filtrarPorCategoriaVenta('Ropa')" class="categoria-btn px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">
+                            Ropa
+                        </button>
+                        <button onclick="filtrarPorCategoriaVenta('Hogar')" class="categoria-btn px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">
+                            Hogar
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Grid de Productos -->
+                <div class="card rounded-xl p-6">
+                    <h3 class="text-lg font-semibold mb-4">Productos Disponibles</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="gridProductosVenta">
+                        <!-- Productos se cargarán dinámicamente -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel de Venta -->
+            <div class="lg:col-span-1">
+                <div class="card rounded-xl p-6 sticky top-8">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xl font-semibold">Carrito de Compra</h3>
+                        <button onclick="vaciarCarritoVenta()" class="text-red-500 hover:text-red-700 text-sm">
+                            <i class="fas fa-trash mr-1"></i>
+                            Vaciar
+                        </button>
+                    </div>
+
+                    <!-- Items del Carrito -->
+                    <div class="cart-items space-y-3 mb-6 max-h-64 overflow-y-auto" id="itemsCarritoVenta">
+                        <!-- Items del carrito se llenarán dinámicamente -->
+                    </div>
+
+                    <!-- Resumen de Compra -->
+                    <div class="border-t pt-4 mb-6">
+                        <div class="space-y-2">
+                            <div class="flex justify-between">
+                                <span>Subtotal:</span>
+                                <span id="subtotal">$0.00</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Descuento:</span>
+                                <span id="descuento">$0.00</span>
+                            </div>
+                            <div class="flex justify-between text-xl font-bold">
+                                <span>Total:</span>
+                                <span id="totalVenta" class="text-green-600">$0.00</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Selector de Cliente -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Cliente</label>
+                        <select id="clienteSelect" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="">Cliente General</option>
+                            <!-- Clientes se cargarán dinámicamente -->
+                        </select>
+                    </div>
+
+                    <!-- Métodos de Pago -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Método de Pago</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="payment-method selected p-3 border rounded-lg text-center" data-metodo="Efectivo">
+                                <i class="fas fa-money-bill text-2xl mb-2"></i>
+                                <div class="text-sm font-semibold">Efectivo</div>
+                            </div>
+                            <div class="payment-method p-3 border rounded-lg text-center" data-metodo="Tarjeta">
+                                <i class="fas fa-credit-card text-2xl mb-2"></i>
+                                <div class="text-sm font-semibold">Tarjeta</div>
+                            </div>
+                            <div class="payment-method p-3 border rounded-lg text-center" data-metodo="Transferencia">
+                                <i class="fas fa-mobile-alt text-2xl mb-2"></i>
+                                <div class="text-sm font-semibold">Transferencia</div>
+                            </div>
+                            <div class="payment-method p-3 border rounded-lg text-center" data-metodo="Crédito">
+                                <i class="fas fa-handshake text-2xl mb-2"></i>
+                                <div class="text-sm font-semibold">Crédito</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Descuento -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Descuento</label>
+                        <div class="flex gap-2">
+                            <input type="number" id="descuentoInput" min="0" max="100" value="0" class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <span class="px-3 py-3 bg-gray-100 rounded-lg">%</span>
+                        </div>
+                    </div>
+
+                    <!-- Botón de Pago -->
+                    <button onclick="procesarVenta()" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-6 rounded-lg text-lg flex items-center justify-center">
+                        <i class="fas fa-cash-register mr-2"></i>
+                        Procesar Venta
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Factura -->
+    <div id="facturaModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl p-8 max-w-md w-full mx-4 max-h-screen overflow-y-auto">
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-check text-green-600 text-2xl"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-green-600 mb-2">¡Venta Exitosa!</h3>
+                <p class="text-gray-600">La transacción ha sido procesada correctamente</p>
+            </div>
+            
+            <div id="facturaContent" class="receipt p-6 rounded-lg mb-6">
+                <!-- Contenido de la factura se generará dinámicamente -->
+            </div>
+            
+            <div class="flex gap-4">
+                <button onclick="imprimirFactura()" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-6 rounded-lg">
+                    <i class="fas fa-print mr-2"></i>
+                    Imprimir
+                </button>
+                <button onclick="cerrarFactura()" class="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="main.js"></script>
+    <script>
+        let metodoPagoSeleccionado = 'Efectivo';
+
+        // Inicializar la página
+        document.addEventListener('DOMContentLoaded', function() {
+            cargarProductosVenta();
+            cargarClientesVenta();
+            actualizarResumenVenta();
+            
+            // Configurar métodos de pago
+            document.querySelectorAll('.payment-method').forEach(method => {
+                method.addEventListener('click', function() {
+                    document.querySelectorAll('.payment-method').forEach(m => m.classList.remove('selected'));
+                    this.classList.add('selected');
+                    metodoPagoSeleccionado = this.dataset.metodo;
+                });
+            });
+            
+            // Configurar descuento
+            document.getElementById('descuentoInput').addEventListener('input', actualizarResumenVenta);
+        });
+
+        function cargarProductosVenta() {
+            const gridProductos = document.getElementById('gridProductosVenta');
+            const productos = sistema.productos.filter(p => p.stock > 0);
+            
+            gridProductos.innerHTML = productos.map(producto => `
+                <div class="product-item card rounded-lg p-4" onclick="agregarAlCarritoVenta('${producto.id}')">
+                    <div class="flex items-center space-x-4">
+                        <img src="${producto.imagen || 'resources/electronics.png'}" alt="${producto.nombre}" 
+                             class="w-16 h-16 object-cover rounded-lg" 
+                             onerror="this.src='resources/electronics.png'">
+                        <div class="flex-1">
+                            <h4 class="font-semibold text-gray-900">${producto.nombre}</h4>
+                            <p class="text-sm text-gray-600">${producto.categoria}</p>
+                            <div class="flex justify-between items-center mt-1">
+                                <span class="text-lg font-bold text-green-600">$${producto.precio.toFixed(2)}</span>
+                                <span class="text-xs text-gray-500">Stock: ${producto.stock}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function cargarClientesVenta() {
+            const clienteSelect = document.getElementById('clienteSelect');
+            const clientes = sistema.clientes;
+            
+            clienteSelect.innerHTML = '<option value="">Cliente General</option>' + 
+                clientes.map(cliente => `<option value="${cliente.id}">${cliente.nombre}</option>`).join('');
+        }
+
+        function agregarAlCarritoVenta(productoId) {
+            const producto = sistema.productos.find(p => p.id === productoId);
+            if (producto && producto.stock > 0) {
+                sistema.agregarAlCarrito(producto);
+                actualizarCarritoVenta();
+                actualizarResumenVenta();
+                
+                // Animación de éxito
+                if (typeof anime !== 'undefined') {
+                    anime({
+                        targets: '.cart-item:last-child',
+                        scale: [0.8, 1],
+                        opacity: [0, 1],
+                        duration: 500,
+                        easing: 'easeOutExpo'
+                    });
+                }
+            }
+        }
+
+        function actualizarCarritoVenta() {
+            const itemsCarrito = document.getElementById('itemsCarritoVenta');
+            
+            if (sistema.carrito.length === 0) {
+                itemsCarrito.innerHTML = `
+                    <div class="text-center py-8 text-gray-500">
+                        <i class="fas fa-shopping-cart text-4xl mb-2"></i>
+                        <p>El carrito está vacío</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            itemsCarrito.innerHTML = sistema.carrito.map(item => `
+                <div class="cart-item flex items-center space-x-3 p-3 border rounded-lg">
+                    <img src="${item.imagen || 'resources/electronics.png'}" alt="${item.nombre}" 
+                         class="w-12 h-12 object-cover rounded" 
+                         onerror="this.src='resources/electronics.png'">
+                    <div class="flex-1">
+                        <h4 class="font-semibold text-sm">${item.nombre}</h4>
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs text-gray-600">$${item.precio} x ${item.cantidad}</span>
+                            <span class="text-sm font-semibold">$${item.subtotal.toFixed(2)}</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button onclick="actualizarCantidad('${item.id}', ${item.cantidad - 1})" 
+                                class="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center text-sm">-</button>
+                        <span class="text-sm font-semibold">${item.cantidad}</span>
+                        <button onclick="actualizarCantidad('${item.id}', ${item.cantidad + 1})" 
+                                class="w-6 h-6 bg-green-200 rounded-full flex items-center justify-center text-sm">+</button>
+                        <button onclick="quitarDelCarritoVenta('${item.id}')" 
+                                class="text-red-500 hover:text-red-700 ml-2">
+                            <i class="fas fa-trash text-sm"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function actualizarCantidad(productoId, nuevaCantidad) {
+            if (nuevaCantidad <= 0) {
+                quitarDelCarritoVenta(productoId);
+                return;
+            }
+            
+            const item = sistema.carrito.find(item => item.id === productoId);
+            if (item) {
+                const productoOriginal = sistema.productos.find(p => p.id === productoId);
+                if (nuevaCantidad <= productoOriginal.stock) {
+                    item.cantidad = nuevaCantidad;
+                    item.subtotal = item.precio * nuevaCantidad;
+                    actualizarCarritoVenta();
+                    actualizarResumenVenta();
+                } else {
+                    sistema.mostrarNotificacion('No hay suficiente stock disponible', 'error');
+                }
+            }
+        }
+
+        function quitarDelCarritoVenta(productoId) {
+            sistema.quitarDelCarrito(productoId);
+            actualizarCarritoVenta();
+            actualizarResumenVenta();
+        }
+
+        function vaciarCarritoVenta() {
+            sistema.vaciarCarrito();
+            actualizarCarritoVenta();
+            actualizarResumenVenta();
+        }
+
+        function actualizarResumenVenta() {
+            const subtotal = sistema.carrito.reduce((sum, item) => sum + item.subtotal, 0);
+            const descuentoPorcentaje = parseFloat(document.getElementById('descuentoInput').value) || 0;
+            const descuento = subtotal * (descuentoPorcentaje / 100);
+            const total = subtotal - descuento;
+            
+            document.getElementById('subtotal').textContent = `$${subtotal.toFixed(2)}`;
+            document.getElementById('descuento').textContent = `$${descuento.toFixed(2)}`;
+            document.getElementById('totalVenta').textContent = `$${total.toFixed(2)}`;
+        }
+
+        function buscarProductosVenta() {
+            const termino = document.getElementById('buscarProductoVenta').value;
+            const resultados = sistema.buscarProductos(termino);
+            
+            if (termino && resultados.length > 0) {
+                const resultadosDiv = document.getElementById('resultadosBusquedaVenta');
+                resultadosDiv.innerHTML = `
+                    <div class="bg-white border border-gray-200 rounded-lg shadow-lg p-4">
+                        <h4 class="font-semibold mb-2">Resultados de búsqueda:</h4>
+                        ${resultados.slice(0, 5).map(producto => `
+                            <div class="flex items-center justify-between p-2 hover:bg-gray-50 rounded cursor-pointer" onclick="agregarAlCarritoVenta('${producto.id}')">
+                                <div class="flex items-center space-x-3">
+                                    <img src="${producto.imagen || 'resources/electronics.png'}" alt="${producto.nombre}" class="w-8 h-8 object-cover rounded">
+                                    <span class="font-medium">${producto.nombre}</span>
+                                </div>
+                                <span class="text-green-600 font-semibold">$${producto.precio.toFixed(2)}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } else {
+                document.getElementById('resultadosBusquedaVenta').innerHTML = '';
+            }
+        }
+
+        function filtrarPorCategoriaVenta(categoria) {
+            // Actualizar botones activos
+            document.querySelectorAll('.categoria-btn').forEach(btn => {
+                btn.classList.remove('bg-blue-500', 'text-white');
+                btn.classList.add('bg-gray-200', 'text-gray-700');
+            });
+            
+            event.target.classList.remove('bg-gray-200', 'text-gray-700');
+            event.target.classList.add('bg-blue-500', 'text-white');
+            
+            // Filtrar productos
+            const productosFiltrados = categoria === 'todos' ? 
+                sistema.productos.filter(p => p.stock > 0) : 
+                sistema.productos.filter(p => p.categoria === categoria && p.stock > 0);
+            
+            const gridProductos = document.getElementById('gridProductosVenta');
+            gridProductos.innerHTML = productosFiltrados.map(producto => `
+                <div class="product-item card rounded-lg p-4" onclick="agregarAlCarritoVenta('${producto.id}')">
+                    <div class="flex items-center space-x-4">
+                        <img src="${producto.imagen || 'resources/electronics.png'}" alt="${producto.nombre}" 
+                             class="w-16 h-16 object-cover rounded-lg" 
+                             onerror="this.src='resources/electronics.png'">
+                        <div class="flex-1">
+                            <h4 class="font-semibold text-gray-900">${producto.nombre}</h4>
+                            <p class="text-sm text-gray-600">${producto.categoria}</p>
+                            <div class="flex justify-between items-center mt-1">
+                                <span class="text-lg font-bold text-green-600">$${producto.precio.toFixed(2)}</span>
+                                <span class="text-xs text-gray-500">Stock: ${producto.stock}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function procesarVenta() {
+            if (sistema.carrito.length === 0) {
+                sistema.mostrarNotificacion('El carrito está vacío', 'error');
+                return;
+            }
+            
+            const clienteId = document.getElementById('clienteSelect').value;
+            const cliente = clienteId ? sistema.clientes.find(c => c.id === clienteId) : { nombre: 'Cliente General' };
+            
+            const venta = sistema.procesarVenta(cliente, metodoPagoSeleccionado);
+            
+            if (venta) {
+                mostrarFactura(venta);
+                actualizarCarritoVenta();
+                actualizarResumenVenta();
+                cargarProductosVenta(); // Actualizar stock mostrado
+            }
+        }
+
+        function mostrarFactura(venta) {
+            const facturaContent = document.getElementById('facturaContent');
+            const fecha = new Date().toLocaleString('es-MX');
+            
+            facturaContent.innerHTML = `
+                <div class="text-center mb-4">
+                    <h4 class="font-bold text-lg">TIENDA DONDE TODO SE VENDE</h4>
+                    <p class="text-sm">RFC: XAXX010101000</p>
+                    <p class="text-sm">Calle Principal #123, Col. Centro</p>
+                    <p class="text-sm">Tel: 555-0123</p>
+                </div>
+                
+                <div class="border-t border-b py-2 mb-4">
+                    <div class="flex justify-between text-sm">
+                        <span>Fecha: ${fecha}</span>
+                        <span>Factura: ${venta.factura}</span>
+                    </div>
+                    <div class="text-sm">Cliente: ${venta.cliente.nombre}</div>
+                    <div class="text-sm">Método: ${venta.metodoPago}</div>
+                </div>
+                
+                <table class="w-full text-sm mb-4">
+                    <thead>
+                        <tr>
+                            <th class="text-left">Producto</th>
+                            <th class="text-center">Cant</th>
+                            <th class="text-right">Precio</th>
+                            <th class="text-right">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${venta.productos.map(item => `
+                            <tr>
+                                <td class="text-left">${item.nombre}</td>
+                                <td class="text-center">${item.cantidad}</td>
+                                <td class="text-right">$${item.precio.toFixed(2)}</td>
+                                <td class="text-right">$${item.subtotal.toFixed(2)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+                
+                <div class="border-t pt-2 text-right">
+                    <div class="text-sm">Subtotal: $${(venta.total + venta.descuento).toFixed(2)}</div>
+                    ${venta.descuento > 0 ? `<div class="text-sm">Descuento: $${venta.descuento.toFixed(2)}</div>` : ''}
+                    <div class="font-bold text-lg">Total: $${venta.total.toFixed(2)}</div>
+                </div>
+                
+                <div class="text-center mt-4 text-xs">
+                    <p>¡Gracias por su compra!</p>
+                    <p>www.tienda.com.mx</p>
+                </div>
+            `;
+            
+            mostrarModal('facturaModal');
+        }
+
+        function imprimirFactura() {
+            const facturaContent = document.getElementById('facturaContent').innerHTML;
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html>
+                <head>
+                    <title>Factura</title>
+                    <style>
+                        body { font-family: 'Courier New', monospace; margin: 20px; }
+                        .receipt { max-width: 300px; margin: 0 auto; }
+                        @media print { body { margin: 0; } }
+                    </style>
+                </head>
+                <body>
+                    <div class="receipt">${facturaContent}</div>
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.print();
+        }
+
+        function cerrarFactura() {
+            ocultarModal('facturaModal');
+        }
+
+        function mostrarModal(modalId) {
+            document.getElementById(modalId).classList.remove('hidden');
+        }
+
+        function ocultarModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+        function toggleCarrito() {
+            const carrito = document.querySelector('.carrito-panel');
+            carrito.classList.toggle('translate-x-full');
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Ganancias - Sistema de Ventas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        .profit-positive { color: #10b981; }
+        .profit-negative { color: #ef4444; }
+        .profit-warning { color: #f59e0b; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="gradient-bg text-white shadow-lg">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center space-x-4">
+                    <i class="fas fa-chart-line text-2xl"></i>
+                    <h1 class="text-xl font-bold">Gestión de Ganancias</h1>
+                </div>
+                <div class="flex space-x-4">
+                    <a href="index.html" class="hover:text-gray-200 transition-colors">
+                        <i class="fas fa-home mr-1"></i>Inicio
+                    </a>
+                    <a href="products.html" class="hover:text-gray-200 transition-colors">
+                        <i class="fas fa-box mr-1"></i>Productos
+                    </a>
+                    <a href="reports.html" class="hover:text-gray-200 transition-colors">
+                        <i class="fas fa-chart-bar mr-1"></i>Reportes
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto px-4 py-8">
+        <!-- Profit Analysis Dashboard -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow-md p-6 card-hover">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Valor Total Inventario</p>
+                        <p class="text-2xl font-bold text-gray-900" id="totalInventory">$0.00</p>
+                    </div>
+                    <div class="p-3 bg-blue-100 rounded-full">
+                        <i class="fas fa-warehouse text-blue-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6 card-hover">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Valor Costo Total</p>
+                        <p class="text-2xl font-bold text-gray-900" id="totalCost">$0.00</p>
+                    </div>
+                    <div class="p-3 bg-red-100 rounded-full">
+                        <i class="fas fa-dollar-sign text-red-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6 card-hover">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Ganancia Total</p>
+                        <p class="text-2xl font-bold profit-positive" id="totalProfit">$0.00</p>
+                    </div>
+                    <div class="p-3 bg-green-100 rounded-full">
+                        <i class="fas fa-chart-line text-green-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6 card-hover">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Margen Promedio</p>
+                        <p class="text-2xl font-bold text-gray-900" id="averageMargin">0%</p>
+                    </div>
+                    <div class="p-3 bg-purple-100 rounded-full">
+                        <i class="fas fa-percentage text-purple-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h2 class="text-xl font-bold mb-4 flex items-center">
+                <i class="fas fa-bolt mr-2 text-yellow-500"></i>
+                Acciones Rápidas
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <button onclick="bulkUpdateMargins()" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors">
+                    <i class="fas fa-edit mr-2"></i>
+                    Actualizar Márgenes Masivo
+                </button>
+                <button onclick="showLowMarginProducts()" class="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 transition-colors">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                    Productos con Bajo Margen
+                </button>
+                <button onclick="showMostProfitable()" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors">
+                    <i class="fas fa-trophy mr-2"></i>
+                    Productos Más Rentables
+                </button>
+            </div>
+        </div>
+
+        <!-- Product Management -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold flex items-center">
+                    <i class="fas fa-cogs mr-2 text-gray-600"></i>
+                    Gestión de Productos
+                </h2>
+                <button onclick="refreshData()" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors">
+                    <i class="fas fa-sync-alt mr-2"></i>
+                    Actualizar
+                </button>
+            </div>
+            
+            <!-- Search Bar -->
+            <div class="mb-4">
+                <div class="relative">
+                    <input type="text" id="searchInput" placeholder="Buscar productos..." 
+                           class="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                </div>
+            </div>
+
+            <!-- Products Table -->
+            <div class="overflow-x-auto">
+                <table class="w-full table-auto">
+                    <thead>
+                        <tr class="bg-gray-50">
+                            <th class="px-4 py-2 text-left">Producto</th>
+                            <th class="px-4 py-2 text-left">Precio Costo</th>
+                            <th class="px-4 py-2 text-left">Margen</th>
+                            <th class="px-4 py-2 text-left">Precio Venta</th>
+                            <th class="px-4 py-2 text-left">Ganancia/Unidad</th>
+                            <th class="px-4 py-2 text-left">Stock</th>
+                            <th class="px-4 py-2 text-left">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="productsTableBody">
+                        <!-- Products will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Most Profitable Products -->
+        <div id="mostProfitableSection" class="bg-white rounded-lg shadow-md p-6 mb-8 hidden">
+            <h2 class="text-xl font-bold mb-4 flex items-center">
+                <i class="fas fa-trophy mr-2 text-yellow-500"></i>
+                Productos Más Rentables
+            </h2>
+            <div id="mostProfitableList" class="space-y-3">
+                <!-- Most profitable products will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Low Margin Products -->
+        <div id="lowMarginSection" class="bg-white rounded-lg shadow-md p-6 mb-8 hidden">
+            <h2 class="text-xl font-bold mb-4 flex items-center">
+                <i class="fas fa-exclamation-triangle mr-2 text-red-500"></i>
+                Productos con Bajo Margen (< 20%)
+            </h2>
+            <div id="lowMarginList" class="space-y-3">
+                <!-- Low margin products will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Product Modal -->
+    <div id="editModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold">Editar Producto</h3>
+                <button onclick="closeEditModal()" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <form id="editForm">
+                <input type="hidden" id="editProductId">
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-2">Precio Costo</label>
+                    <input type="number" id="editCostPrice" step="0.01" 
+                           class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-2">Margen de Ganancia (%)</label>
+                    <input type="number" id="editProfitMargin" step="0.01" min="0" max="99.99"
+                           class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-2">Precio Manual (Opcional)</label>
+                    <input type="number" id="editManualPrice" step="0.01"
+                           class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                </div>
+                
+                <div class="mb-4">
+                    <label class="flex items-center">
+                        <input type="checkbox" id="editIsManualPrice" class="mr-2">
+                        <span class="text-sm">Usar precio manual</span>
+                    </label>
+                </div>
+                
+                <div class="flex space-x-3">
+                    <button type="submit" class="flex-1 bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600">
+                        Guardar Cambios
+                    </button>
+                    <button type="button" onclick="closeEditModal()" 
+                            class="flex-1 bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600">
+                        Cancelar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Bulk Update Modal -->
+    <div id="bulkUpdateModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold">Actualización Masiva de Márgenes</h3>
+                <button onclick="closeBulkUpdateModal()" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <form id="bulkUpdateForm">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-2">Categoría (Opcional)</label>
+                    <select id="bulkCategoryId" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                        <option value="">Todas las categorías</option>
+                        <!-- Categories will be loaded here -->
+                    </select>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-2">Nuevo Margen (%)</label>
+                    <input type="number" id="bulkNewMargin" step="0.01" min="0" max="99.99"
+                           class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                </div>
+                
+                <div class="flex space-x-3">
+                    <button type="submit" class="flex-1 bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600">
+                        Actualizar
+                    </button>
+                    <button type="button" onclick="closeBulkUpdateModal()" 
+                            class="flex-1 bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600">
+                        Cancelar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="profit-management.js"></script>
+</body>
+</html>
