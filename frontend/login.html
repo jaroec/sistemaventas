@@ -91,6 +91,20 @@
             25% { transform: translateX(-5px); }
             75% { transform: translateX(5px); }
         }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
@@ -157,10 +171,14 @@
                 <!-- Botón de Login -->
                 <button 
                     type="submit" 
-                    class="btn-primary w-full py-3 px-6 text-white font-semibold rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                    id="loginButton"
+                    class="btn-primary w-full py-3 px-6 text-white font-semibold rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 flex items-center justify-center"
                 >
-                    <i class="fas fa-sign-in-alt mr-2"></i>
-                    Iniciar Sesión
+                    <span id="loginButtonText">
+                        <i class="fas fa-sign-in-alt mr-2"></i>
+                        Iniciar Sesión
+                    </span>
+                    <div id="loginSpinner" class="loading hidden ml-2"></div>
                 </button>
             </form>
 
@@ -173,11 +191,11 @@
 
             <!-- Botones Alternativos -->
             <div class="mt-6 grid grid-cols-2 gap-4">
-                <button class="flex items-center justify-center py-2 px-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                <button type="button" class="flex items-center justify-center py-2 px-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
                     <i class="fab fa-google text-red-500 mr-2"></i>
                     <span class="text-sm">Google</span>
                 </button>
-                <button class="flex items-center justify-center py-2 px-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                <button type="button" class="flex items-center justify-center py-2 px-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
                     <i class="fab fa-facebook text-blue-600 mr-2"></i>
                     <span class="text-sm">Facebook</span>
                 </button>
@@ -276,10 +294,14 @@
 
                 <button 
                     type="submit" 
-                    class="btn-primary w-full py-3 px-6 text-white font-semibold rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                    id="registerButton"
+                    class="btn-primary w-full py-3 px-6 text-white font-semibold rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 flex items-center justify-center"
                 >
-                    <i class="fas fa-user-plus mr-2"></i>
-                    Registrarse
+                    <span id="registerButtonText">
+                        <i class="fas fa-user-plus mr-2"></i>
+                        Registrarse
+                    </span>
+                    <div id="registerSpinner" class="loading hidden ml-2"></div>
                 </button>
             </form>
 
@@ -299,6 +321,9 @@
     <div id="messageContainer" class="fixed top-4 right-4 z-50"></div>
 
     <script>
+        // Configuración de la API
+        const API_URL = 'http://localhost:3000/api';
+
         // Función para mostrar/ocultar el modal de registro
         function mostrarRegistro() {
             document.getElementById('registroModal').classList.remove('hidden');
@@ -320,12 +345,42 @@
                 return;
             }
 
-            const result = await sistema.login(username, password);
+            // Mostrar estado de carga
+            const loginButton = document.getElementById('loginButton');
+            const loginButtonText = document.getElementById('loginButtonText');
+            const loginSpinner = document.getElementById('loginSpinner');
             
-            if (result.success) {
-                setTimeout(() => {
-                    window.location.href = 'index.html';
-                }, 1000);
+            loginButton.disabled = true;
+            loginButtonText.textContent = 'Iniciando sesión...';
+            loginSpinner.classList.remove('hidden');
+
+            try {
+                const response = await fetch(`${API_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    localStorage.setItem('authToken', data.tokens.accessToken);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    mostrarMensaje('¡Inicio de sesión exitoso! Redirigiendo...', 'success');
+                    
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 1500);
+                } else {
+                    mostrarMensaje(data.message || 'Error en el inicio de sesión', 'error');
+                }
+            } catch (error) {
+                mostrarMensaje('Error de conexión: ' + error.message, 'error');
+            } finally {
+                // Restaurar estado del botón
+                loginButton.disabled = false;
+                loginButtonText.innerHTML = '<i class="fas fa-sign-in-alt mr-2"></i>Iniciar Sesión';
+                loginSpinner.classList.add('hidden');
             }
         });
 
@@ -354,18 +409,44 @@
                 return;
             }
 
-            const result = await sistema.register({
-                username,
-                email,
-                fullName,
-                password
-            });
+            // Mostrar estado de carga
+            const registerButton = document.getElementById('registerButton');
+            const registerButtonText = document.getElementById('registerButtonText');
+            const registerSpinner = document.getElementById('registerSpinner');
+            
+            registerButton.disabled = true;
+            registerButtonText.textContent = 'Registrando...';
+            registerSpinner.classList.remove('hidden');
 
-            if (result.success) {
-                // Limpiar formulario
-                document.getElementById('registroForm').reset();
-                ocultarRegistro();
-                mostrarMensaje('Usuario registrado exitosamente. Por favor inicia sesión.', 'success');
+            try {
+                const response = await fetch(`${API_URL}/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username,
+                        email,
+                        fullName,
+                        password
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Limpiar formulario
+                    document.getElementById('registroForm').reset();
+                    ocultarRegistro();
+                    mostrarMensaje('Usuario registrado exitosamente. Por favor inicia sesión.', 'success');
+                } else {
+                    mostrarMensaje(data.message || 'Error en el registro', 'error');
+                }
+            } catch (error) {
+                mostrarMensaje('Error de conexión: ' + error.message, 'error');
+            } finally {
+                // Restaurar estado del botón
+                registerButton.disabled = false;
+                registerButtonText.innerHTML = '<i class="fas fa-user-plus mr-2"></i>Registrarse';
+                registerSpinner.classList.add('hidden');
             }
         });
 
@@ -374,17 +455,31 @@
             const container = document.getElementById('messageContainer');
             const mensajeElement = document.createElement('div');
             
-            mensajeElement.className = `p-4 rounded-lg shadow-lg mb-2 ${
+            mensajeElement.className = `p-4 rounded-lg shadow-lg mb-2 transform transition-all duration-300 ${
                 tipo === 'success' ? 'bg-green-500 text-white' :
-                tipo === 'error' ? 'bg-red-500 text-white' :
+                tipo === 'error' ? 'bg-red-500 text-white error-message' :
                 'bg-blue-500 text-white'
             }`;
             
-            mensajeElement.textContent = mensaje;
+            mensajeElement.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas fa-${tipo === 'success' ? 'check-circle' : tipo === 'error' ? 'exclamation-triangle' : 'info-circle'} mr-2"></i>
+                    <span>${mensaje}</span>
+                </div>
+            `;
+            
             container.appendChild(mensajeElement);
             
+            // Animación de entrada
             setTimeout(() => {
-                mensajeElement.remove();
+                mensajeElement.classList.add('translate-x-0');
+            }, 10);
+            
+            setTimeout(() => {
+                mensajeElement.classList.add('opacity-0', 'translate-x-full');
+                setTimeout(() => {
+                    mensajeElement.remove();
+                }, 300);
             }, 5000);
         }
 
@@ -407,7 +502,29 @@
                 ocultarRegistro();
             }
         });
+
+        // Verificar si ya está autenticado
+        window.addEventListener('load', () => {
+            const token = localStorage.getItem('authToken');
+            if (token) {
+                // Verificar si el token es válido
+                fetch(`${API_URL}/auth/verify`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        window.location.href = 'index.html';
+                    }
+                })
+                .catch(() => {
+                    // Si hay error, limpiar token inválido
+                    localStorage.removeItem('authToken');
+                    localStorage.removeItem('user');
+                });
+            }
+        });
     </script>
-    <script src="main.js"></script>
 </body>
 </html>
