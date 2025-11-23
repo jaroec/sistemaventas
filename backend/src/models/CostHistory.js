@@ -49,7 +49,5 @@ const CostHistory = sequelize.define('CostHistory', {
   underscored: true
 });
 
-// Associations
-CostHistory.belongsTo(Product, { foreignKey: 'productId', as: 'product' });
 
 module.exports = CostHistory;
