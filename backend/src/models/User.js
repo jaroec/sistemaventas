@@ -80,7 +80,7 @@ const User = sequelize.define('User', {
   }
 });
 
-// Métodos de instancia
+// ✅ MÉTODOS DE INSTANCIA (Sin asociaciones)
 User.prototype.validatePassword = async function(password) {
   return await bcrypt.compare(password, this.passwordHash);
 };
@@ -91,9 +91,9 @@ User.prototype.toJSON = function() {
   return values;
 };
 
-// Métodos de clase
+// ✅ MÉTODOS DE CLASE (Sin asociaciones)
 User.generateHash = async function(password) {
-  const saltRounds = parseInt(process.env.BCRYPT_ROUNDS) || 12;
+  const saltRounds = parseInt(process.env.BCRYPT_ROUNDS) || 10;
   return await bcrypt.hash(password, saltRounds);
 };
 
@@ -105,7 +105,7 @@ User.findByUsername = function(username) {
   return this.findOne({ where: { username: username.toLowerCase().trim() } });
 };
 
-// Hooks para encriptar contraseña
+// ✅ HOOKS (Sin asociaciones)
 User.beforeCreate(async (user) => {
   if (user.passwordHash) {
     user.passwordHash = await User.generateHash(user.passwordHash);
@@ -117,5 +117,9 @@ User.beforeUpdate(async (user) => {
     user.passwordHash = await User.generateHash(user.passwordHash);
   }
 });
+
+// 🚫 NO HAY ASOCIACIONES AQUÍ
+// Todas las asociaciones se definen CENTRALIZADAMENTE en models/index.js
+// mediante la función defineAssociations()
 
 module.exports = User;
