@@ -1,7 +1,5 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/database');
-const Category = require('./Category');
-const Supplier = require('./Supplier');
 
 const Product = sequelize.define('Product', {
   id: {
@@ -10,7 +8,7 @@ const Product = sequelize.define('Product', {
     autoIncrement: true
   },
   name: {
-    type: DataTypes.STRING,
+    type: DataTypes.STRING(200),
     allowNull: false,
     validate: {
       notEmpty: true
@@ -20,58 +18,107 @@ const Product = sequelize.define('Product', {
     type: DataTypes.TEXT,
     allowNull: true
   },
-  costPrice: {
+  barcode: {
+    type: DataTypes.STRING(50),
+    allowNull: true,
+    unique: true
+  },
+  categoryId: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    field: 'category_id'
+  },
+  supplierId: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    field: 'supplier_id'
+  },
+  // Precio de venta (normal)
+  price: {
     type: DataTypes.DECIMAL(10, 2),
     allowNull: false,
-    defaultValue: 0.00,
+    validate: {
+      min: 0
+    }
+  },
+  // Precio de costo (para cálculo de ganancias)
+  costPrice: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: true,
+    defaultValue: 0,
+    validate: {
+      min: 0
+    },
     field: 'cost_price'
   },
+  // Margen de ganancia deseado (%)
   profitMargin: {
     type: DataTypes.DECIMAL(5, 2),
-    allowNull: false,
-    defaultValue: 30.00,
-    field: 'profit_margin',
+    allowNull: true,
+    defaultValue: 30,
     validate: {
       min: 0,
       max: 99.99
-    }
+    },
+    field: 'profit_margin'
   },
+  // Precio calculado automáticamente
   calculatedSalePrice: {
     type: DataTypes.DECIMAL(10, 2),
-    allowNull: false,
-    defaultValue: 0.00,
+    allowNull: true,
+    defaultValue: 0,
     field: 'calculated_sale_price'
   },
+  // Precio manual (opcional, para sobrescribir el calculado)
   manualSalePrice: {
     type: DataTypes.DECIMAL(10, 2),
     allowNull: true,
     field: 'manual_sale_price'
   },
-  currentStock: {
+  // Indica si usa precio manual
+  isUsingManualPrice: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+    field: 'is_using_manual_price'
+  },
+  stock: {
     type: DataTypes.INTEGER,
-    allowNull: false,
     defaultValue: 0,
-    field: 'current_stock'
+    validate: {
+      min: 0
+    }
   },
-  minimumStock: {
+  minStock: {
     type: DataTypes.INTEGER,
-    allowNull: false,
-    defaultValue: 10,
-    field: 'minimum_stock'
+    defaultValue: 5,
+    validate: {
+      min: 0
+    },
+    field: 'min_stock'
   },
-  barcode: {
-    type: DataTypes.STRING,
+  imageUrl: {
+    type: DataTypes.STRING(500),
     allowNull: true,
-    unique: true
+    field: 'image_url'
+  },
+  isActive: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true,
+    field: 'is_active'
   },
   status: {
     type: DataTypes.ENUM('active', 'inactive', 'discontinued'),
     defaultValue: 'active'
   },
-  isUsingManualPrice: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false,
-    field: 'is_using_manual_price'
+  createdAt: {
+    type: DataTypes.DATE,
+    field: 'created_at',
+    defaultValue: DataTypes.NOW
+  },
+  updatedAt: {
+    type: DataTypes.DATE,
+    field: 'updated_at',
+    defaultValue: DataTypes.NOW
   }
 }, {
   tableName: 'products',
@@ -79,13 +126,13 @@ const Product = sequelize.define('Product', {
   underscored: true,
   hooks: {
     beforeValidate: (product) => {
-      // Calculate sale price using the formula: PV = PC / (1 - % de ganancias)
-      if (product.costPrice && product.profitMargin !== undefined) {
+      // Calcular precio de venta automáticamente
+      if (product.costPrice && product.profitMargin !== undefined && !product.isUsingManualPrice) {
         const margin = parseFloat(product.profitMargin);
         const cost = parseFloat(product.costPrice);
         
         if (margin >= 100) {
-          product.calculatedSalePrice = cost * 2; // Safety fallback
+          product.calculatedSalePrice = cost * 2;
         } else if (margin >= 0) {
           product.calculatedSalePrice = parseFloat((cost / (1 - (margin / 100))).toFixed(2));
         }
@@ -94,40 +141,53 @@ const Product = sequelize.define('Product', {
   }
 });
 
-// Instance methods for profit calculation
+// ============================================
+// MÉTODOS DE INSTANCIA (Cálculo de ganancias)
+// ============================================
+
 Product.prototype.getSalePrice = function() {
-  return this.isUsingManualPrice && this.manualSalePrice 
-    ? parseFloat(this.manualSalePrice) 
-    : parseFloat(this.calculatedSalePrice);
+  if (this.isUsingManualPrice && this.manualSalePrice) {
+    return parseFloat(this.manualSalePrice);
+  }
+  return parseFloat(this.calculatedSalePrice || this.price || 0);
 };
 
 Product.prototype.getProfitPerUnit = function() {
   const salePrice = this.getSalePrice();
-  const costPrice = parseFloat(this.costPrice);
+  const costPrice = parseFloat(this.costPrice || 0);
   return salePrice - costPrice;
 };
 
 Product.prototype.getProfitMarginPercentage = function() {
   const salePrice = this.getSalePrice();
-  const costPrice = parseFloat(this.costPrice);
+  const costPrice = parseFloat(this.costPrice || 0);
   
-  if (costPrice === 0) return 0;
+  if (salePrice <= 0 || costPrice <= 0) return 0;
   return ((salePrice - costPrice) / salePrice) * 100;
 };
 
 Product.prototype.getTotalProfitValue = function() {
-  return this.getProfitPerUnit() * this.currentStock;
+  return this.getProfitPerUnit() * (this.stock || 0);
 };
 
 Product.prototype.updateSalePrice = async function() {
-  // Recalculate sale price based on current cost and margin
-  this.calculatedSalePrice = parseFloat((this.costPrice / (1 - (this.profitMargin / 100))).toFixed(2));
-  await this.save();
-  return this.calculatedSalePrice;
+  if (!this.isUsingManualPrice && this.costPrice && this.profitMargin !== undefined) {
+    const margin = parseFloat(this.profitMargin);
+    const cost = parseFloat(this.costPrice);
+    
+    if (margin < 100) {
+      this.calculatedSalePrice = parseFloat((cost / (1 - (margin / 100))).toFixed(2));
+    } else {
+      this.calculatedSalePrice = cost * 2;
+    }
+    
+    await this.save();
+  }
+  return this.getSalePrice();
 };
 
 Product.prototype.setManualPrice = async function(price) {
-  this.manualSalePrice = price;
+  this.manualSalePrice = parseFloat(price);
   this.isUsingManualPrice = true;
   await this.save();
 };
@@ -138,20 +198,26 @@ Product.prototype.useCalculatedPrice = async function() {
   await this.save();
 };
 
-// Class methods for profit analysis
-Product.calculateOptimalMargin = function(costPrice, desiredSalePrice) {
-  if (costPrice <= 0 || desiredSalePrice <= 0) return 0;
-  
-  const margin = ((desiredSalePrice - costPrice) / desiredSalePrice) * 100;
-  return Math.max(0, Math.min(99.99, margin));
-};
+// ============================================
+// MÉTODOS DE CLASE (Análisis de rentabilidad)
+// ============================================
 
 Product.getProfitAnalysis = async function() {
-  const products = await Product.findAll({
-    where: { status: 'active' },
-    attributes: ['id', 'name', 'costPrice', 'calculatedSalePrice', 'manualSalePrice', 
-                'profitMargin', 'currentStock', 'isUsingManualPrice']
+  const products = await this.findAll({
+    where: { status: 'active' }
   });
+
+  if (products.length === 0) {
+    return {
+      totalProducts: 0,
+      totalInventoryValue: 0,
+      totalCostValue: 0,
+      totalProfitValue: 0,
+      averageMargin: 0,
+      productsWithLowMargin: [],
+      mostProfitableProducts: []
+    };
+  }
 
   const analysis = {
     totalProducts: products.length,
@@ -170,50 +236,52 @@ Product.getProfitAnalysis = async function() {
     const profitPerUnit = product.getProfitPerUnit();
     const marginPercentage = product.getProfitMarginPercentage();
     
-    const inventoryValue = salePrice * product.currentStock;
-    const costValue = product.costPrice * product.currentStock;
-    const profitValue = profitPerUnit * product.currentStock;
+    const inventoryValue = salePrice * product.stock;
+    const costValue = parseFloat(product.costPrice || 0) * product.stock;
+    const profitValue = profitPerUnit * product.stock;
 
     analysis.totalInventoryValue += inventoryValue;
     analysis.totalCostValue += costValue;
     analysis.totalProfitValue += profitValue;
     totalMarginSum += marginPercentage;
 
-    // Identify products with low margins (< 20%)
-    if (marginPercentage < 20) {
+    // Identificar productos con bajo margen
+    if (marginPercentage < 20 && marginPercentage >= 0) {
       analysis.productsWithLowMargin.push({
         id: product.id,
         name: product.name,
         margin: marginPercentage,
         salePrice: salePrice,
-        costPrice: product.costPrice
+        costPrice: product.costPrice,
+        profitPerUnit: profitPerUnit
       });
     }
 
-    // Track most profitable products
+    // Rastrear productos más rentables
     analysis.mostProfitableProducts.push({
       id: product.id,
       name: product.name,
       profitPerUnit: profitPerUnit,
       totalProfitValue: profitValue,
-      marginPercentage: marginPercentage
+      marginPercentage: marginPercentage,
+      stock: product.stock
     });
   });
 
-  analysis.averageMargin = totalMarginSum / products.length;
+  analysis.averageMargin = products.length > 0 ? totalMarginSum / products.length : 0;
   
-  // Sort most profitable products
+  // Ordenar productos más rentables
   analysis.mostProfitableProducts.sort((a, b) => b.totalProfitValue - a.totalProfitValue);
   analysis.mostProfitableProducts = analysis.mostProfitableProducts.slice(0, 10);
 
-  // Sort low margin products by margin (ascending)
+  // Ordenar por margen bajo
   analysis.productsWithLowMargin.sort((a, b) => a.margin - b.margin);
 
   return analysis;
 };
 
-// Associations
-Product.belongsTo(Category, { foreignKey: 'categoryId', as: 'category' });
-Product.belongsTo(Supplier, { foreignKey: 'supplierId', as: 'supplier' });
+// 🚫 NO HAY ASOCIACIONES AQUÍ
+// Todas las asociaciones se definen CENTRALIZADAMENTE en models/index.js
+// mediante la función defineAssociations()
 
 module.exports = Product;
