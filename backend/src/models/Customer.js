@@ -84,7 +84,7 @@ const Customer = sequelize.define('Customer', {
   }
 });
 
-// Métodos de instancia
+// ✅ MÉTODOS DE INSTANCIA
 Customer.prototype.addLoyaltyPoints = async function(points) {
   this.loyaltyPoints += points;
   await this.save();
@@ -115,7 +115,7 @@ Customer.prototype.useCredit = async function(amount) {
   return this.creditBalance;
 };
 
-// Métodos de clase
+// ✅ MÉTODOS DE CLASE
 Customer.findByEmail = function(email) {
   return this.findOne({ where: { email: email.toLowerCase().trim() } });
 };
@@ -136,30 +136,6 @@ Customer.search = function(query) {
   });
 };
 
-Customer.getTopCustomers = function(limit = 10) {
-  const Sale = require('./Sale');
-  
-  return this.findAll({
-    attributes: {
-      include: [
-        [sequelize.fn('COUNT', sequelize.col('sales.id')), 'totalPurchases'],
-        [sequelize.fn('SUM', sequelize.col('sales.total_amount')), 'totalSpent'],
-        [sequelize.fn('MAX', sequelize.col('sales.created_at')), 'lastPurchaseDate']
-      ]
-    },
-    include: [{
-      model: Sale,
-      attributes: [],
-      where: { status: 'completed' },
-      required: false
-    }],
-    group: ['Customer.id'],
-    order: [[sequelize.literal('totalSpent'), 'DESC NULLS LAST']],
-    limit: limit,
-    having: sequelize.literal('totalSpent > 0')
-  });
-};
-
 Customer.getWithCredit = function() {
   return this.findAll({
     where: {
@@ -171,4 +147,5 @@ Customer.getWithCredit = function() {
   });
 };
 
+// ⚠️ NO AGREGAR ASOCIACIONES AQUÍ - Se definen en index.js
 module.exports = Customer;
