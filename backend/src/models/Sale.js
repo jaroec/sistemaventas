@@ -1,7 +1,5 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/database');
-const Customer = require('./Customer');
-const User = require('./User');
 
 const Sale = sequelize.define('Sale', {
   id: {
@@ -18,19 +16,11 @@ const Sale = sequelize.define('Sale', {
   customerId: {
     type: DataTypes.INTEGER,
     allowNull: true,
-    references: {
-      model: Customer,
-      key: 'id'
-    },
     field: 'customer_id'
   },
   userId: {
     type: DataTypes.INTEGER,
     allowNull: false,
-    references: {
-      model: User,
-      key: 'id'
-    },
     field: 'user_id'
   },
   totalAmount: {
@@ -87,13 +77,7 @@ const Sale = sequelize.define('Sale', {
   underscored: true
 });
 
-// Relaciones
-Sale.belongsTo(Customer, { foreignKey: 'customerId', as: 'customer' });
-Sale.belongsTo(User, { foreignKey: 'userId', as: 'user' });
-Customer.hasMany(Sale, { foreignKey: 'customerId', as: 'sales' });
-User.hasMany(Sale, { foreignKey: 'userId', as: 'sales' });
-
-// Métodos de instancia
+// ✅ MÉTODOS DE INSTANCIA
 Sale.prototype.getSubtotal = function() {
   return this.totalAmount - this.taxAmount + this.discountAmount;
 };
@@ -110,15 +94,9 @@ Sale.prototype.getNetAmount = function() {
   return this.totalAmount;
 };
 
-// Métodos de clase
+// ✅ MÉTODOS DE CLASE
 Sale.findByInvoiceNumber = function(invoiceNumber) {
-  return this.findOne({ 
-    where: { invoiceNumber },
-    include: [
-      { model: Customer, as: 'customer' },
-      { model: User, as: 'user' }
-    ]
-  });
+  return this.findOne({ where: { invoiceNumber } });
 };
 
 Sale.findByDateRange = function(startDate, endDate) {
@@ -129,10 +107,6 @@ Sale.findByDateRange = function(startDate, endDate) {
       },
       status: 'completed'
     },
-    include: [
-      { model: Customer, as: 'customer' },
-      { model: User, as: 'user' }
-    ],
     order: [['createdAt', 'DESC']]
   });
 };
@@ -150,11 +124,7 @@ Sale.getDailySales = function(date = new Date()) {
         [sequelize.Op.between]: [startOfDay, endOfDay]
       },
       status: 'completed'
-    },
-    include: [
-      { model: Customer, as: 'customer' },
-      { model: User, as: 'user' }
-    ]
+    }
   });
 };
 
@@ -177,26 +147,8 @@ Sale.getSalesSummary = function(startDate, endDate) {
   });
 };
 
-Sale.getTopProducts = function(startDate, endDate, limit = 10) {
-  const SaleItem = require('./SaleItem');
-  const Product = require('./Product');
-  
-  return this.findAll({
-    where: {
-      createdAt: {
-        [sequelize.Op.between]: [startDate, endDate]
-      },
-      status: 'completed'
-    },
-    include: [{
-      model: SaleItem,
-      include: [{
-        model: Product,
-        attributes: ['id', 'name', 'categoryId']
-      }]
-    }],
-    limit: limit
-  });
-};
+// 🚫 NO HAY ASOCIACIONES AQUÍ
+// Todas las asociaciones se definen CENTRALIZADAMENTE en models/index.js
+// mediante la función defineAssociations()
 
 module.exports = Sale;
