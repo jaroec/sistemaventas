@@ -76,12 +76,6 @@ const InventoryMovement = sequelize.define('InventoryMovement', {
   updatedAt: false // No necesitamos updated_at para movimientos
 });
 
-// Relaciones
-InventoryMovement.belongsTo(Product, { foreignKey: 'productId', as: 'product' });
-InventoryMovement.belongsTo(User, { foreignKey: 'userId', as: 'user' });
-Product.hasMany(InventoryMovement, { foreignKey: 'productId', as: 'inventoryMovements' });
-User.hasMany(InventoryMovement, { foreignKey: 'userId', as: 'inventoryMovements' });
-
 // Métodos de clase
 InventoryMovement.getProductHistory = function(productId, limit = 50) {
   return this.findAll({
