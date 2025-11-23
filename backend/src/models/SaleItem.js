@@ -69,11 +69,6 @@ const SaleItem = sequelize.define('SaleItem', {
   updatedAt: false // No necesitamos updated_at para items de venta
 });
 
-// Relaciones
-SaleItem.belongsTo(Sale, { foreignKey: 'saleId', as: 'sale' });
-SaleItem.belongsTo(Product, { foreignKey: 'productId', as: 'product' });
-Sale.hasMany(SaleItem, { foreignKey: 'saleId', as: 'items' });
-Product.hasMany(SaleItem, { foreignKey: 'productId', as: 'saleItems' });
 
 // Métodos de instancia
 SaleItem.prototype.getTotal = function() {
