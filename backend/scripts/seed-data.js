@@ -166,21 +166,24 @@ const seedData = {
 // Script para poblar la base de datos
 const seedDatabase = async () => {
   try {
-    console.log('🌱 Iniciando seed de datos...');
+    console.log('🌱 Iniciando seed de datos...\n');
     
     // Conectar a la base de datos
     await sequelize.authenticate();
-    console.log('✅ Conexión establecida');
+    console.log('✅ Conexión establecida\n');
     
-    // Definir asociaciones
+    // Definir asociaciones ANTES de sincronizar
+    console.log('🔗 Definiendo asociaciones...');
     defineAssociations();
-    console.log('✅ Asociaciones definidas');
+    console.log('✅ Asociaciones definidas\n');
     
     // Sincronizar modelos
     await sequelize.sync({ force: false, alter: true });
-    console.log('✅ Modelos sincronizados');
+    console.log('✅ Modelos sincronizados\n');
     
-    // Crear usuarios
+    // ====================================================
+    // CREAR USUARIOS
+    // ====================================================
     console.log('👤 Creando usuarios...');
     for (const userData of seedData.users) {
       const [user, created] = await User.findOrCreate({
@@ -197,30 +200,40 @@ const seedDatabase = async () => {
         console.log(`ℹ️  Usuario ya existe: ${user.username}`);
       }
     }
+    console.log('');
     
-    // Crear categorías
+    // ====================================================
+    // CREAR CATEGORÍAS
+    // ====================================================
     console.log('📂 Creando categorías...');
-    const createdCategories = {};
+    const createdCategories = {}; // ✅ IMPORTANTE: Guardar los IDs
+    
     for (const categoryData of seedData.categories) {
       const [category, created] = await Category.findOrCreate({
         where: { name: categoryData.name },
         defaults: categoryData
       });
       
-      createdCategories[category.name] = category;
+      // ✅ CORRECTO: Guardar el ID de la categoría
+      createdCategories[category.name] = category.id;
       
       if (created) {
-        console.log(`✅ Categoría creada: ${category.name}`);
+        console.log(`✅ Categoría creada: ${category.name} (ID: ${category.id})`);
       } else {
-        console.log(`ℹ️  Categoría ya existe: ${category.name}`);
+        console.log(`ℹ️  Categoría ya existe: ${category.name} (ID: ${category.id})`);
       }
     }
+    console.log('');
     
-    // Crear productos
+    // ====================================================
+    // CREAR PRODUCTOS
+    // ====================================================
     console.log('📦 Creando productos...');
     for (const productData of seedData.products) {
-      const category = createdCategories[productData.categoryName];
-      if (!category) {
+      // ✅ CORRECTO: Obtener el ID de la categoría del diccionario
+      const categoryId = createdCategories[productData.categoryName];
+      
+      if (!categoryId) {
         console.log(`❌ Categoría no encontrada: ${productData.categoryName}`);
         continue;
       }
@@ -228,8 +241,16 @@ const seedDatabase = async () => {
       const [product, created] = await Product.findOrCreate({
         where: { barcode: productData.barcode },
         defaults: {
-          ...productData,
-          categoryId: category.id
+          name: productData.name,
+          description: productData.description,
+          barcode: productData.barcode,
+          categoryId: categoryId, // ✅ CORRECTO: Usar el ID que guardamos
+          price: productData.price,
+          costPrice: productData.cost,
+          stock: productData.stock,
+          minStock: productData.minStock,
+          profitMargin: 30.00, // Margen por defecto
+          isActive: true
         }
       });
       
@@ -239,8 +260,11 @@ const seedDatabase = async () => {
         console.log(`ℹ️  Producto ya existe: ${product.name}`);
       }
     }
+    console.log('');
     
-    // Crear clientes
+    // ====================================================
+    // CREAR CLIENTES
+    // ====================================================
     console.log('👥 Creando clientes...');
     for (const customerData of seedData.customers) {
       const [customer, created] = await Customer.findOrCreate({
@@ -254,24 +278,27 @@ const seedDatabase = async () => {
         console.log(`ℹ️  Cliente ya existe: ${customer.name}`);
       }
     }
+    console.log('');
     
-    console.log('✅ Seed completado exitosamente');
+    console.log('✅ Seed completado exitosamente\n');
     console.log('📊 Datos creados:');
     console.log(`  - ${seedData.users.length} usuarios`);
     console.log(`  - ${seedData.categories.length} categorías`);
     console.log(`  - ${seedData.products.length} productos`);
     console.log(`  - ${seedData.customers.length} clientes`);
+    console.log('');
     
     // Credenciales de acceso
-    console.log('\n🔑 Credenciales de prueba:');
-    console.log('Admin: admin@sistema.com / admin123');
-    console.log('Manager: manager@sistema.com / manager123');
-    console.log('Cajero: cajero1@sistema.com / cajero123');
+    console.log('🔑 Credenciales de prueba:');
+    console.log('   Admin: admin@sistema.com / admin123');
+    console.log('   Manager: manager@sistema.com / manager123');
+    console.log('   Cajero: cajero1@sistema.com / cajero123\n');
     
     await sequelize.close();
     process.exit(0);
   } catch (error) {
     console.error('❌ Error en seed:', error);
+    console.error(error.stack);
     process.exit(1);
   }
 };
