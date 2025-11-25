@@ -8,10 +8,10 @@ const InventoryMovement = require('./InventoryMovement');
 const Supplier = require('./Supplier');
 const { sequelize } = require('../config/database');
 const { DataTypes } = require('sequelize');
+
 /**
- * Define TODAS las asociaciones entre modelos
- * ✅ TODOS los aliases son ÚNICOS
- * ✅ Sin conflictos
+ * ✅ Define TODAS las asociaciones entre modelos
+ * TODOS los aliases son ÚNICOS - Sin conflictos
  */
 const defineAssociations = () => {
   console.log('🔗 Definiendo asociaciones de modelos...');
@@ -20,28 +20,26 @@ const defineAssociations = () => {
     // ==========================================
     // USER ASSOCIATIONS
     // ==========================================
-    // User crea ventas (como vendedor)
     User.hasMany(Sale, { 
       foreignKey: 'userId', 
-      as: 'salesCreated',  // ✅ ÚNICO
+      as: 'salesCreated',
       onDelete: 'SET NULL'
     });
     
     Sale.belongsTo(User, { 
       foreignKey: 'userId', 
-      as: 'seller'  // ✅ ÚNICO
+      as: 'seller'
     });
 
-    // User registra movimientos de inventario
     User.hasMany(InventoryMovement, { 
       foreignKey: 'userId', 
-      as: 'inventoryMovementsCreated',  // ✅ ÚNICO
+      as: 'inventoryMovementsCreated',
       onDelete: 'SET NULL'
     });
     
     InventoryMovement.belongsTo(User, { 
       foreignKey: 'userId', 
-      as: 'recordedBy'  // ✅ ÚNICO
+      as: 'recordedBy'
     });
 
     console.log('  ✅ User ↔ Sale (seller)');
@@ -50,16 +48,15 @@ const defineAssociations = () => {
     // ==========================================
     // CUSTOMER ASSOCIATIONS
     // ==========================================
-    // Customer realiza compras (es el comprador)
     Customer.hasMany(Sale, { 
       foreignKey: 'customerId', 
-      as: 'purchaseHistory',  // ✅ ÚNICO
+      as: 'purchaseHistory',
       onDelete: 'SET NULL'
     });
     
     Sale.belongsTo(Customer, { 
       foreignKey: 'customerId', 
-      as: 'customer'  // ✅ ÚNICO
+      as: 'customer'
     });
 
     console.log('  ✅ Customer ↔ Sale (customer)');
@@ -67,33 +64,31 @@ const defineAssociations = () => {
     // ==========================================
     // CATEGORY ASSOCIATIONS
     // ==========================================
-    // Category tiene muchos productos
     Category.hasMany(Product, { 
       foreignKey: 'categoryId', 
-      as: 'categoryProducts',  // ✅ ÚNICO (diferente de "products")
+      as: 'products',  // ✅ Cambié de 'categoryProducts' a 'products'
       onDelete: 'SET NULL'
     });
     
     Product.belongsTo(Category, { 
       foreignKey: 'categoryId', 
-      as: 'category'  // ✅ ÚNICO
+      as: 'category'
     });
 
-    console.log('  ✅ Category ↔ Product (categoryProducts)');
+    console.log('  ✅ Category ↔ Product (products)');
 
     // ==========================================
     // SUPPLIER ASSOCIATIONS
     // ==========================================
-    // Supplier tiene muchos productos
     Supplier.hasMany(Product, { 
       foreignKey: 'supplierId', 
-      as: 'suppliedProducts',  // ✅ ÚNICO (diferente de "categoryProducts")
+      as: 'suppliedProducts',
       onDelete: 'SET NULL'
     });
     
     Product.belongsTo(Supplier, { 
       foreignKey: 'supplierId', 
-      as: 'supplier'  // ✅ ÚNICO
+      as: 'supplier'
     });
 
     console.log('  ✅ Supplier ↔ Product (suppliedProducts)');
@@ -101,16 +96,15 @@ const defineAssociations = () => {
     // ==========================================
     // SALE & SALEITEM ASSOCIATIONS
     // ==========================================
-    // Sale tiene muchos items
     Sale.hasMany(SaleItem, { 
       foreignKey: 'saleId', 
-      as: 'items',  // ✅ ÚNICO
+      as: 'items',
       onDelete: 'CASCADE'
     });
     
     SaleItem.belongsTo(Sale, { 
       foreignKey: 'saleId', 
-      as: 'sale'  // ✅ ÚNICO
+      as: 'sale'
     });
 
     console.log('  ✅ Sale ↔ SaleItem (items)');
@@ -118,16 +112,16 @@ const defineAssociations = () => {
     // ==========================================
     // PRODUCT & SALEITEM ASSOCIATIONS
     // ==========================================
-    // Product tiene muchos items de venta
     Product.hasMany(SaleItem, { 
       foreignKey: 'productId', 
-      as: 'saleLineItems',  // ✅ ÚNICO
+      as: 'saleLineItems',
       onDelete: 'CASCADE'
     });
     
+    // ✅ CAMBIÉ: De 'product' a 'soldProduct'
     SaleItem.belongsTo(Product, { 
       foreignKey: 'productId', 
-      as: 'soldProduct'  // ✅ ÚNICO (diferente de "product")
+      as: 'soldProduct'
     });
 
     console.log('  ✅ Product ↔ SaleItem (soldProduct)');
@@ -135,16 +129,16 @@ const defineAssociations = () => {
     // ==========================================
     // PRODUCT & INVENTORY MOVEMENT ASSOCIATIONS
     // ==========================================
-    // Product tiene muchos movimientos de inventario
     Product.hasMany(InventoryMovement, { 
       foreignKey: 'productId', 
-      as: 'inventoryHistory',  // ✅ ÚNICO
+      as: 'inventoryHistory',
       onDelete: 'CASCADE'
     });
     
+    // ✅ CAMBIÉ: De 'product' a 'movedProduct'
     InventoryMovement.belongsTo(Product, { 
       foreignKey: 'productId', 
-      as: 'movedProduct'  // ✅ ÚNICO (diferente de "soldProduct")
+      as: 'movedProduct'
     });
 
     console.log('  ✅ Product ↔ InventoryMovement (movedProduct)');
@@ -158,7 +152,7 @@ const defineAssociations = () => {
 };
 
 /**
- * Verificar que no haya asociaciones duplicadas
+ * ✅ Verificar que NO haya asociaciones duplicadas
  */
 const verifyAssociations = () => {
   console.log('🔍 Verificando unicidad de alias...\n');
