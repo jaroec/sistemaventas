@@ -15,15 +15,47 @@ const getAllProducts = async (req, res) => {
       order: [['name', 'ASC']]
     });
 
-    const productsWithProfit = products.map(product => ({
-      ...product.toJSON(),
-      salePrice: product.getSalePrice(),
-      profitPerUnit: product.getProfitPerUnit(),
-      profitMarginPercentage: product.getProfitMarginPercentage(),
-      totalProfitValue: product.getTotalProfitValue()
-    }));
+    // ✅ CORREGIR: Normalizar nombres de campos
+    const productsWithProfit = products.map(product => {
+      const p = product.toJSON();
+      return {
+        // Enviar con AMBOS nombres para compatibilidad
+        id: p.id,
+        name: p.name || p.nombre,
+        nombre: p.name,
+        description: p.description || p.descripcion,
+        descripcion: p.description,
+        barcode: p.barcode || p.codigoBarras,
+        codigoBarras: p.barcode,
+        categoryId: p.categoryId,
+        category_id: p.categoryId,
+        price: parseFloat(p.price || p.precio || 0),
+        precio: parseFloat(p.price || p.precio || 0),
+        costPrice: parseFloat(p.costPrice || p.cost_price || 0),
+        cost_price: parseFloat(p.costPrice || p.cost_price || 0),
+        stock: p.stock || p.currentStock || 0,
+        currentStock: p.stock || p.currentStock || 0,
+        minStock: p.minStock || p.min_stock || 10,
+        min_stock: p.minStock || p.min_stock || 10,
+        imageUrl: p.imageUrl || p.image_url,
+        imagen: p.imageUrl || p.image_url,
+        isActive: p.isActive !== false,
+        status: p.status || 'active',
+        category: p.category,
+        supplier: p.supplier,
+        // Calcular ganancias
+        profitPerUnit: (p.price || 0) - (p.costPrice || 0),
+        profitMarginPercentage: p.price > 0 
+          ? (((p.price || 0) - (p.costPrice || 0)) / p.price) * 100 
+          : 0,
+        totalProfitValue: ((p.price || 0) - (p.costPrice || 0)) * (p.stock || 0)
+      };
+    });
 
-    res.json(productsWithProfit);
+    res.json({ 
+      products: productsWithProfit,
+      data: productsWithProfit // Enviar también como 'data' para compatibilidad
+    });
   } catch (error) {
     console.error('Error fetching products:', error);
     res.status(500).json({ error: 'Error fetching products' });
